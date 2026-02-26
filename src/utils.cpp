@@ -3,6 +3,7 @@
 #include <tlhelp32.h>
 #include <winreg.h>
 #include <vector>
+#include <unordered_set>
 #include <wctype.h>
 #include <sstream>
 
@@ -169,22 +170,60 @@ std::vector<std::wstring> promptDllMultiSelect(const std::vector<std::wstring>& 
     }
 }
 
-DWORD getProcessId(const wchar_t* pattern) {
+std::vector<ProcessInfo> getProcesses() {
+    std::vector<ProcessInfo> procs;
     PROCESSENTRY32W processEntry = { sizeof(processEntry) };
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (snapshot == INVALID_HANDLE_VALUE) return 0;
+    if (snapshot == INVALID_HANDLE_VALUE) return procs;
 
-    DWORD pid = 0;
+    std::unordered_set<DWORD> windowProcessIds;
+    EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL {
+        DWORD windowProcessId = 0;
+        GetWindowThreadProcessId(hwnd, &windowProcessId);
+        if (windowProcessId != 0) {
+            auto* processIdSet = (std::unordered_set<DWORD>*)lParam;
+            processIdSet->insert(windowProcessId);
+        }
+        return TRUE;
+        }, (LPARAM)&windowProcessIds);
+
     if (Process32FirstW(snapshot, &processEntry)) {
         do {
-            if (wildcardEquals(processEntry.szExeFile, pattern)) {
-                pid = processEntry.th32ProcessID;
-                break;
-            }
+            if (processEntry.th32ProcessID == 0) continue;
+
+            DWORD sessionId = 0;
+            if (ProcessIdToSessionId(processEntry.th32ProcessID, &sessionId) && sessionId == 0) continue;
+
+            const wchar_t* extension = wcsrchr(processEntry.szExeFile, L'.');
+            if (!extension || _wcsicmp(extension, L".exe") != 0) continue;
+
+            if (windowProcessIds.find(processEntry.th32ProcessID) == windowProcessIds.end()) continue;
+
+            procs.push_back({ processEntry.th32ProcessID, processEntry.szExeFile });
         } while (Process32NextW(snapshot, &processEntry));
     }
+
     CloseHandle(snapshot);
-    return pid;
+    return procs;
+}
+
+DWORD promptProcessSelect(const std::vector<ProcessInfo>& procs) {
+    wchar_t inputBuffer[PROMPT_INPUT_SIZE];
+
+    for (;;) {
+        g_console.clear();
+        for (size_t i = 0; i < procs.size(); ++i) {
+            g_console.printf(L"%d: %ls (PID: %lu)\n", (int)i + 1, procs[i].name.c_str(), procs[i].pid);
+        }
+        g_console.printf(MSG_PROCESS_PROMPT, (int)procs.size());
+
+        if (!readLine(inputBuffer, sizeof(inputBuffer) / sizeof(inputBuffer[0]))) continue;
+
+        int idx = stringToInt(inputBuffer);
+        if (idx >= 1 && idx <= (int)procs.size()) {
+            return procs[idx - 1].pid;
+        }
+    }
 }
 
 void countdown(int ms) {
@@ -193,43 +232,6 @@ void countdown(int ms) {
         Sleep(1000);
     }
     g_console.print(L"\n");
-}
-
-bool getSteamExecutable(std::wstring& out) {
-    static const HKEY roots[] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
-    static const wchar_t* values[] = { L"SteamExe", L"SteamPath" };
-    wchar_t buf[MAX_PATH];
-
-    for (int rootIndex = 0; rootIndex < 2; ++rootIndex) {
-        for (int valueIndex = 0; valueIndex < 2; ++valueIndex) {
-            DWORD len = sizeof(buf);
-            DWORD flags = (rootIndex == 1) ? KEY_WOW64_64KEY : 0;
-            if (RegGetValueW(roots[rootIndex], L"Software\\Valve\\Steam", values[valueIndex],
-                RRF_RT_REG_SZ | flags, nullptr, buf, &len) == ERROR_SUCCESS) {
-                if (valueIndex == 1 && !wcsrchr(buf, L'\\'))
-                    wcscat(buf, L"\\Steam.exe");
-                out = buf;
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-void launchSteam() {
-    std::wstring exePath;
-    if (!getSteamExecutable(exePath)) return;
-
-    wchar_t commandLine[MAX_PATH + 64];
-    swprintf(commandLine, MAX_PATH + 64, L"\"%ls\" steam://run/%ls", exePath.c_str(), APP_ID);
-
-    STARTUPINFOW si = { 0 };
-    si.cb = sizeof(si);
-    PROCESS_INFORMATION pi = { 0 };
-    if (CreateProcessW(nullptr, commandLine, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi)) {
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
-    }
 }
 
 const wchar_t* getExecutableName() {
