@@ -21,23 +21,11 @@ int main() {
 
     int injectCount = (int)injectDlls.size();
 
-    const wchar_t* procPattern = PATTERN_PROC;
-    DWORD pid = getProcessId(procPattern);
+    std::vector<ProcessInfo> procs = getProcesses();
+    if (procs.empty())
+        return exitWithError(MSG_NO_PROCESS);
 
-    if (!pid) {
-        g_console.print(MSG_NO_PROCESS);
-        launchSteam();
-        g_console.print(MSG_WAIT_PROCESS);
-
-        while (!(pid = getProcessId(procPattern)))
-            Sleep(PROCESS_POLL_INTERVAL);
-
-        for (int m = DELAY_POST_LAUNCH; m > 0; m -= 1000) {
-            g_console.printf(MSG_INJECT_IN, SEC(m));
-            Sleep(1000);
-        }
-        g_console.print(L"\n");
-    }
+    DWORD pid = promptProcessSelect(procs);
 
     for (int i = 0; i < injectCount; ++i) {
         const wchar_t* dllName = wcsrchr(injectDlls[i].c_str(), L'\\');
@@ -58,7 +46,16 @@ int main() {
             g_console.print(MSG_ERROR_INJECT);
             Sleep(DELAY_RETRY);
 
-            if (!getProcessId(procPattern))
+            bool processExists = false;
+            std::vector<ProcessInfo> currentProcs = getProcesses();
+            for (const auto& p : currentProcs) {
+                if (p.pid == pid) {
+                    processExists = true;
+                    break;
+                }
+            }
+
+            if (!processExists)
                 return exitWithError(MSG_ERROR_CRASHED, dllList);
         }
 
