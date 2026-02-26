@@ -1,0 +1,19 @@
+{
+    "buildPresets": [
+        {
+            "configurePreset": "default",
+            "name": "default"
+        }
+    ],
+    "configurePresets": [
+        {
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "MinSizeRel"
+            },
+            "generator": "Ninja",
+            "name": "default"
+        }
+    ],
+    "version": 3
+}
