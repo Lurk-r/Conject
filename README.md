@@ -2,7 +2,7 @@
 A simple Console-only DLL(s) Injector
 
 > This branch is the **single-process** version of Conject.  
-> Looking for the process-picker version? See the **universal branch**.
+> Looking for the process-picker version? See the **[universal](https://github.com/Lurk-r/conject/tree/universal)** branch.
 ### Join our [server](https://dsc.gg/algea) for support
 
 ## Disclaimer
@@ -21,11 +21,11 @@ If no matching process is found, the injector can wait/launch (via Steam) and in
 
 ## Features
 
-- Console-only UI (clean CLI flow)
+- Console-only UI
 - Default target process pattern
 - DLL discovery from injector folder (`*.dll`)
 - Lightweight and easy to use
 - Minimal dependencies (Windows API only, no `vcruntime`)
 - Portable (with `/MT`)
 - Single or multi-DLL injection
-- Retry handling with elevation/crash checks
+- Retry with elevation/crash checks
