@@ -3,6 +3,7 @@ A simple Console-only DLL(s) Injector
 
 > This branch is the **universal** version of Conject.  
 > Looking for the single process version? See the **main** branch.
+### Join our [server](https://dsc.gg/algea) for support
 
 ## Disclaimer
 
