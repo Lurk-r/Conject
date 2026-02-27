@@ -1,5 +1,6 @@
 # Conject - Console Injector
-A simple Console-only DLL(s) Injector
+A simple Console-only DLL(s) Injector </br>
+Feel free to use this project as base, credits if you can.
 
 > This branch is the **universal** version of Conject.  
 > Looking for the single-process version? See the **[main](https://github.com/Lurk-r/conject)** branch.
@@ -22,6 +23,6 @@ It finds DLLs, builds a filtered process list, and lets you choose the target be
 - Lightweight and easy to use
 - Minimal dependencies (Windows API only, no `vcruntime`)
 - Portable (with `/MT`)
-- Selectable process list
-- Single or multi-DLL injection
+- Selectable process list with windows (avoid services, child processes)
+- Single or multi-DLL injection via QueueAPC
 - Retry with elevation/crash checks
