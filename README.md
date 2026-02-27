@@ -1,6 +1,6 @@
 # Conject - Console Injector
 A simple Console-only DLL(s) Injector </br>
-Feel free to use this project as base, credit if you can.
+Feel free to use this project as base, credits if you can.
 
 > This branch is the **single-process** version of Conject.  
 > Looking for the process-picker version? See the **[universal](https://github.com/Lurk-r/conject/tree/universal)** branch.
