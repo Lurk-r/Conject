@@ -9,7 +9,7 @@ Feel free to use this project as base, credits if you can.
 ## Disclaimer
 
 This project is for educational use and authorized security research only.  
-Only test on software/systems you own or have explicit permission to assess.
+Only test on software/systems you own or have explicit permission to access.
 
 ## Overview
 
